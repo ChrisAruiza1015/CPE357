@@ -34,7 +34,6 @@ int main()
     int *active = mmap(NULL, 4, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     *active = 0;
-    printf("%i here is number \n",*active);
 
 
 
@@ -44,10 +43,9 @@ int main()
     {
 
         childPID = getpid();
-        printf("Child pid = %d",childPID);
+        printf("Child pid = %d\n",childPID);
 
 
-        printf("child process rn\n");
         while (1)
         {
 
@@ -98,13 +96,19 @@ int main()
 
             else if (strcmp(fileName,"..") == 0)
             {
+                *active = 1;
                 chdir("..");
             }
 
             else if ('/'==fileName[0])
             {
+                *active = 1;
+                if (chdir(fileName+1) == -1)
+                {
+                    printf("Folder doesn't exist\n");
+                }
                 chdir(fileName+1);           
-                 }
+            }
 
 
             else if (stat(fileName, &sb) == -1)
