@@ -13,6 +13,17 @@
 #define KBLU  "\x1B[34m"
 #define RESET "\x1B[0m"
 
+void sigintHandlerC(int sig)
+{
+    signal(SIGINT, sigintHandlerC); 
+    fflush(stdout); 
+}
+
+void sigintHandlerZ(int sig)
+{
+    signal(SIGTSTP, sigintHandlerZ); 
+    fflush(stdout); 
+}
 
 
 int main()
@@ -24,9 +35,9 @@ int main()
     
     int f1, g, childPID;
 
-    char fileName[1000];
   
     char directContainer [1000][1000];
+    char fileName[1000];    
 
     
     
@@ -36,7 +47,8 @@ int main()
     *active = 0;
 
 
-
+    signal(SIGINT, sigintHandlerC);
+    signal(SIGTSTP, sigintHandlerZ);
     f1 = fork();
 
     if (f1 == 0)
@@ -111,15 +123,22 @@ int main()
             }
 
 
-            else if (stat(fileName, &sb) == -1)
-            {
-                *active = 1;
-                printf("Invalid filename!!! \n");
-            }
+            // else if (stat(fileName, &sb) == -1)
+            // {
+            //     *active = 1;
+            //     printf("Invalid filename!!! \n");
+            // }
             else
             {
                 *active = 1;
-                stat(fileName, &sb);
+                if (stat(fileName, &sb) == -1)
+                {
+                    *active = 1;
+                    printf("Invalid filename!!! \n");
+                }
+                else
+                {
+
                 
                 printf("ID of containing device:  [%lx,%lx]\n",
                 (long) major(sb.st_dev), (long) minor(sb.st_dev));
@@ -156,6 +175,7 @@ int main()
                 printf("Last status change:       %s", ctime(&sb.st_ctime));
                 printf("Last file access:         %s", ctime(&sb.st_atime));
                 printf("Last file modification:   %s", ctime(&sb.st_mtime));
+                }
 
 
             }
