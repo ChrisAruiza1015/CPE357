@@ -39,9 +39,10 @@ void fct()
 {
 
     printf("\nChildren %i overwriting input with task %s\n",*overwritePipe, childrenList[*overwritePipe].task);
-    printf("fd[%i][0] = %i\n",*overwritePipe,fd[*overwritePipe][0]);
-    printf("fd[%i][1] = %i\n", *overwritePipe,fd[*overwritePipe][1]);
     dup2(fd[*overwritePipe][0],STDIN_FILENO);
+    close(fd[*overwritePipe][0]);
+    close(fd[*overwritePipe][1]);
+
 
 }
 
@@ -158,17 +159,18 @@ int main()
 
         // scanf("%s",fileName);
         // int calc = read(STDIN_FILENO,fileName,10000);
+        // printf("\n");
         // printf("calc = %i\n",calc);
         fflush(0);
         dup2(save_stdin,STDIN_FILENO); //restore user input
-
         read(STDIN_FILENO,fileName,1000);
+
 
         printf("User Input = %s \n",fileName);
         // close(fd[0][0]);
         // close(fd[0][1]);
-        // close(fd[*overwritePipe][0]);
-        // close(fd[*overwritePipe][1]);
+        
+
         // printf("stringlength file name = %d\n",strlen(fileName));
         // printf("Input2 %s = \n",fileName+strlen(fileName)+1);
         // for(int i =0; i < calc; i++)
@@ -263,18 +265,18 @@ int main()
 
             if (forkYes == 1)
             {
-            printf("About to fork and piping %i!\n",currentCounter);
-            // pipe(fd[currentCounter]);
+            // printf("About to fork and piping %i!\n",currentCounter);
+            pipe(fd[currentCounter]);
 
-            printf("Outside fork fd[currentCounter][0] = %i \n",fd[*overwritePipe][0]);
-            printf("Outside fork fd[currentCounter][1] = %i \n",fd[*overwritePipe][1]); 
+            // printf("Outside fork fd[currentCounter][0] = %i \n",fd[*overwritePipe][0]);
+            // printf("Outside fork fd[currentCounter][1] = %i \n",fd[*overwritePipe][1]); 
                 if (fork() == 0)
                 {
                     // printf("Childrencounter for child %i",)
                     char bufferOutput [2000];
                     // printf("Childrencounter = %d\n",currentCounter + 1);
 
-                    printf("forked just now \n");
+                    // printf("forked just now \n");
                     char cwdf [1024];
                     char swdf [1024];
                     getcwd(cwdf,sizeof(cwdf));   
@@ -370,7 +372,7 @@ int main()
 
                     else
                     {
-                        printf("Finding!\n");
+                        // printf("Finding!\n");
                         dir = opendir(".");
                         int found = 0;
 
@@ -393,7 +395,6 @@ int main()
                         
                             if ((strncmp(dent->d_name, fileName+5,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
                             {
-                                printf("If \n");
                                 char childNumber[10];
                                 itoa(currentCounter,childNumber,10);
                                 strcat(bufferOutput,"\nChild ");
@@ -403,7 +404,7 @@ int main()
                                 strcat(bufferOutput," was found in directory ");
                                 strcat(bufferOutput,cwdf);
                                 strcat(bufferOutput,"\n");
-                                printf("%s was found in directory %s\n",fileName, cwdf);
+                                // printf("%s was found in directory %s\n",fileName, cwdf);
                                 found = 1;
                             }
                             // printf("found = %i\n",found);
@@ -430,19 +431,19 @@ int main()
                     //     printf("File does not exist!!! \n");
                     // }
                     int a = 0;
-                    printf("Buffer Output = %s\n",bufferOutput);
+                    // printf("Buffer Output = %s\n",bufferOutput);
                     // printf("fd %d\n",fd[currentCounter][1]);
-                    printf("Current counter = %i\n",currentCounter);
-                    printf("fd[currentCounter][0] = %i \n",fd[currentCounter][0]);
-                    printf("fd[currentCounter][1] = %i \n",fd[currentCounter][1]);
-                    sleep(5);
+                    // printf("Current counter = %i\n",currentCounter);
+                    // printf("fd[currentCounter][0] = %i \n",fd[currentCounter][0]);
+                    // printf("fd[currentCounter][1] = %i \n",fd[currentCounter][1]);
+                    sleep(15);
 
 
                     write(fd[currentCounter][1],bufferOutput,1024);
-                    close(fd[0][0]);
-                    close(fd[0][1]);
-                    // close(fd[currentCounter][0]);
-                    // close(fd[currentCounter][1]);
+                    // close(fd[0][0]);
+                    // close(fd[0][1]);
+                    close(fd[currentCounter][0]);
+                    close(fd[currentCounter][1]);
 
                     *overwritePipe = currentCounter;
 
