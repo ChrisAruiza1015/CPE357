@@ -22,6 +22,7 @@ typedef struct children
 
 typedef struct directory
 {
+    DIR *dir;
     char cwd[1000];
     int visit;
 }directory;
@@ -29,6 +30,9 @@ typedef struct directory
 int fd[10][2];
 children *childrenList;
 int *childrenCounter;
+int *globalCount;
+
+int *overwritePipe;
 
 void fct()
 {
@@ -89,7 +93,7 @@ void itoa(int value, char* str, int base) {
 	
 }
 
-void findFile(char *d_name, char*fileName, char *buffer);
+void reaDir(DIR *dir, char bufferOutput[2000],char fileName[1000]);
 
 int main()
 {
@@ -106,7 +110,13 @@ int main()
     int parentPid = getpid();
     int childpid;
 
+    int *childIndex = (int*)mmap(NULL,sizeof(int)*10,PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,0);
+    for (int i =0; i < 10; i++)
+        childIndex[i] = 0;
+
     childrenCounter = mmap(NULL,4,PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS,-1,0);
+
+    globalCount = mmap(NULL,4,PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS,-1,0);
 
     directory *dirContainer = (directory*)mmap(NULL,sizeof(directory)*10000,PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
@@ -213,13 +223,17 @@ int main()
             int currentCounter;
             currentCounter = *childrenCounter;
             *childrenCounter = *childrenCounter + 1;
-            printf("Parent PID = %d\n",getpid());
+            // *globalCount = *childrenCounter;
+
+
+            // printf("Parent PID = %d\n",getpid());
             if (*childrenCounter < 11)
             {
                 if (fork() == 0)
                 {
+                    // printf("Childrencounter for child %i",)
                     char bufferOutput [2000];
-                    printf("Childrencounter = %d\n",currentCounter + 1);
+                    // printf("Childrencounter = %d\n",currentCounter + 1);
 
                     
                     char cwdf [1024];
@@ -234,23 +248,40 @@ int main()
 
                     int firstDirectory = 1;
                     int dirElement = 0;
+                    char *inputBuffer;
+                    inputBuffer = memcpy(inputBuffer,fileName + 5, strlen(fileName + 5) - 4);
+
 
                     // sleep(5); //finding stuff
                     if (strstr(fileName,"-s"))
                     {
+                        int found = 0;
+                        
+
                         while (1)
                         {
                             getcwd(cwdf,sizeof(cwdf));
                             printf("Current Directory = %s\n",cwdf);
-                            chdir("..");
-                            getcwd(swdf,sizeof(swdf));
-                            printf("Sub directory = %s\n",swdf);
-                            int found = 0;
+                            dir = opendir(".");
 
+                            
                             while ((dent = readdir(dir)) != NULL)
                             {
-                                if (strncmp(dent->d_name, fileName+5,strlen(dent->d_name)) == 0)
+                                printf("dent->d_name == %s\n",dent->d_name);
+                                // printf("fileName+5 = %s\n",fileName+5);
+                                int lenDent = strlen(dent->d_name);
+                                int lenInput = strlen(fileName +5) - 1;
+                                int max = lenDent;
+                                if (lenDent > lenInput)
+                                    max = lenDent;
+                                if (lenDent < lenInput)
+                                    max = lenInput;
+                            
+                                stat(dent->d_name, &sb);
+                        
+                                if ((strncmp(dent->d_name, inputBuffer,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
                                 {
+
                                     char childNumber[10];
                                     itoa(*childrenCounter,childNumber,10);
                                     strcat(bufferOutput,"\nChild ");
@@ -260,14 +291,22 @@ int main()
                                     strcat(bufferOutput," was found in directory ");
                                     strcat(bufferOutput,cwdf);
                                     strcat(bufferOutput,"\n");
-                                    printf("%s was found in directory %s\n",fileName, cwdf);
+                                    // printf("%s was found in directory %s\n",fileName, cwdf);
                                     found = 1;
                                 }
-                                // dirContainer[dirElement] = bufferOutput;
-                                // dirElement++;
-                                // printf("found = %i\n",found);
+
+                                // if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
+                                // {
+                                //     printf("Dent->d_name = %s\n",dent->d_name);
+                                //     reaDir(opendir(dent->d_name),bufferOutput,fileName);
+                                // }
+                                
                                 
                             }     
+                            close(dir);
+                            chdir("..");
+                            getcwd(swdf,sizeof(swdf));
+                            // printf("Sub directory = %s\n",swdf);
 
                             if (found == 0)
                             {
@@ -279,7 +318,6 @@ int main()
                                     strcat(bufferOutput,"The file ");
                                     strcat(bufferOutput,fileName+5);
                                     strcat(bufferOutput,"was not found \n");
-
                             }
 
                             // dir = open(".");
@@ -302,6 +340,8 @@ int main()
 
                             if (strcmp(swdf,cwdf) == 0)
                             {
+                                sleep(2);
+                                printf("quitting finding -s\n");
                                 break;
                             }
                             sleep(1);
@@ -311,16 +351,30 @@ int main()
 
                     else
                     {
-                        printf("Finding!\n");
+                        // printf("Finding!\n");
                         dir = opendir(".");
                         int found = 0;
 
                         while ((dent = readdir(dir)) != NULL)
                         {
-                            // printf("dent->d_name == %s\n",dent->d_name);
+                            printf("dent->d_name == %s\n",dent->d_name);
                             // printf("fileName+5 = %s\n",fileName+5);
-                            if (strncmp(dent->d_name, fileName+5,strlen(dent->d_name)) == 0)
+                            // printf("length of fileName + 5 = %d\n",strlen(fileName+5) - 1);
+                            // printf("length of dent->dname = %d\n",strlen(dent->d_name));
+                            // printf("Comparing d name to file name + 5 = %d\n",strncmp(dent->d_name, fileName+5,strlen(fileName+5) - 1));
+                            int lenDent = strlen(dent->d_name);
+                            int lenInput = strlen(fileName +5) - 1;
+                            int max = lenDent;
+                            if (lenDent > lenInput)
+                                max = lenDent;
+                            if (lenDent < lenInput)
+                                max = lenInput;
+                            
+                            stat(dent->d_name, &sb);
+                        
+                            if ((strncmp(dent->d_name, fileName+5,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
                             {
+                                printf("If \n");
                                 char childNumber[10];
                                 itoa(*childrenCounter,childNumber,10);
                                 strcat(bufferOutput,"\nChild ");
@@ -357,10 +411,9 @@ int main()
                     //     printf("File does not exist!!! \n");
                     // }
                     int a = 0;
-                    printf("Buffer Output = %s\n",bufferOutput);
-                    printf("fd %d\n",fd[currentCounter][1]);
+                    // printf("Buffer Output = %s\n",bufferOutput);
+                    // printf("fd %d\n",fd[currentCounter][1]);
                     write(fd[currentCounter][1],bufferOutput,1024);
-                    write(fd[currentCounter][1],"ALIBABA",1024);
                     
                     kill(parentPid,SIGUSR1);
                     childrenList[currentCounter].active = 0; 
@@ -371,7 +424,7 @@ int main()
                     return 9;
                 }   
 
-                printf("after child process %i\n",*childrenCounter);
+                // printf("after child process %i\n",*childrenCounter);
             }
             else
             {
@@ -383,4 +436,61 @@ int main()
     }
 
 
+}
+
+void reaDir(DIR *dir, char bufferOutput[2000], char fileName[1000])
+{
+    printf("going inside reaDir \n");
+    struct stat sb;
+    struct dirent *dent;
+    char cwdf[1024];
+    char *inputBuffer;
+    inputBuffer = memcpy(inputBuffer,fileName + 5, strlen(fileName + 5) - 4);
+
+    // chdir()
+    
+    
+
+    getcwd(cwdf,sizeof(cwdf));
+    printf("Current Directory recursive = %s\n",cwdf);
+    
+
+        
+    while ((dent = readdir(dir)) != NULL)
+    {
+        printf("dent->d_name recursive == %s\n",dent->d_name);
+        // printf("fileName+5 = %s\n",fileName+5);
+        int lenDent = strlen(dent->d_name);
+        int lenInput = strlen(fileName +5) - 1;
+        int max = lenDent;
+        if (lenDent > lenInput)
+            max = lenDent;
+        if (lenDent < lenInput)
+            max = lenInput;
+    
+        stat(dent->d_name, &sb);
+
+        if ((strncmp(dent->d_name, inputBuffer,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
+        {
+
+            char childNumber[10];
+            itoa(*childrenCounter,childNumber,10);
+            strcat(bufferOutput,"\nChild ");
+            strcat(bufferOutput,childNumber);
+            strcat(bufferOutput," reporting!!!! \n");
+            strncat(bufferOutput,fileName+5,strlen(dent->d_name));
+            strcat(bufferOutput," was found in directory ");
+            strcat(bufferOutput,cwdf);
+            strcat(bufferOutput,"\n");
+            // printf("%s was found in directory %s\n",fileName, cwdf);
+        }
+
+        if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
+        {
+            reaDir(opendir(dent->d_name),bufferOutput,fileName);
+        }
+        
+        
+    }     
+    close(dir);
 }
