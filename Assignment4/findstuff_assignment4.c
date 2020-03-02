@@ -28,6 +28,7 @@ typedef struct directory
 }directory;
 
 int fd[10][2];
+
 children *childrenList;
 int *childrenCounter;
 int *globalCount;
@@ -36,10 +37,12 @@ int *overwritePipe;
 
 void fct()
 {
-    int currentActual;
-    currentActual = *childrenCounter;
-    printf("\nChildren %i overwriting input with task %s\n",currentActual, childrenList[currentActual - 1].task);
-    dup2(fd[currentActual - 1][0],STDIN_FILENO);
+
+    printf("\nChildren %i overwriting input with task %s\n",*overwritePipe, childrenList[*overwritePipe].task);
+    printf("fd[%i][0] = %i\n",*overwritePipe,fd[*overwritePipe][0]);
+    printf("fd[%i][1] = %i\n", *overwritePipe,fd[*overwritePipe][1]);
+    dup2(fd[*overwritePipe][0],STDIN_FILENO);
+
 }
 
 void strreverse(char* begin, char* end) {
@@ -120,6 +123,7 @@ int main()
 
     directory *dirContainer = (directory*)mmap(NULL,sizeof(directory)*10000,PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
+    overwritePipe = mmap(NULL,4,PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS,-1,0);
     // childrenCounter = 0;
     // int *childrenCounter = mmap(NULL,4,PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS,-1,0);
     // *childrenCounter = 0;
@@ -128,7 +132,10 @@ int main()
     childrenList = (children*)mmap(NULL,sizeof(children)*10,PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     for (int i = 0; i<10; i++)
+    {
         pipe(fd[i]);
+    }
+    
     int save_stdin = dup(STDIN_FILENO);
 
     signal(SIGUSR1,fct);
@@ -152,14 +159,21 @@ int main()
         // scanf("%s",fileName);
         // int calc = read(STDIN_FILENO,fileName,10000);
         // printf("calc = %i\n",calc);
+        fflush(0);
+        dup2(save_stdin,STDIN_FILENO); //restore user input
+
         read(STDIN_FILENO,fileName,1000);
+
         printf("User Input = %s \n",fileName);
+        // close(fd[0][0]);
+        // close(fd[0][1]);
+        // close(fd[*overwritePipe][0]);
+        // close(fd[*overwritePipe][1]);
         // printf("stringlength file name = %d\n",strlen(fileName));
         // printf("Input2 %s = \n",fileName+strlen(fileName)+1);
         // for(int i =0; i < calc; i++)
         //     printf("'%c' ",fileName[i]);
         
-        dup2(save_stdin,STDIN_FILENO); //restore user input
 
      
 
@@ -168,21 +182,28 @@ int main()
         {
             printf("------------------------------------------------------\n");
             printf("Listing!!! \n");
-            if (*childrenCounter == 0)
+            // if (*childrenCounter == 0)
+            // {
+            //     printf("No children! \n");
+            // }
+            int noChild = 0;
+            for (int i = 0; i < 10; i++)
             {
-                printf("No children! \n");
-            }
-
-            for (int i = 0; i < *childrenCounter; i++)
-            {
-                printf("\n");
-                printf("Child %i:",i + 1);
-                printf("            Task %s\n",childrenList[i].task);
-                printf("                    PID = %i\n",childrenList[i].pid);
-                printf("                    Active = %i\n", childrenList[i].active);
+                if (childrenList[i].active == 1)
+                {
+                    printf("\n");
+                    printf("Child %i:",i);
+                    printf("            Task %s\n",childrenList[i].task);
+                    printf("                    PID = %i\n",childrenList[i].pid);
+                    printf("                    Active = %i\n", childrenList[i].active);
+                    noChild = 1;
+                }
             }
             printf("\n");
-
+            if (noChild == 0)
+            {
+                printf("No children! They are all dead! \n");
+            }
         }
     //HANDLE CASE KILL!
         if(strncmp("kill",fileName,4) == 0)
@@ -190,12 +211,13 @@ int main()
             int childNumber = atoi(fileName + 5);
             printf("killing\n");
             printf("fileName number = %i\n",childNumber);
-            if (childrenList[childNumber - 1].active == 1)
+            if (childrenList[childNumber].active == 1)
             {
                 printf("Killed child %i\n",childNumber);
-                printf("Child %i PID = %i\n",childNumber,childrenList[childNumber - 1].pid);
-                childrenList[childNumber - 1].active = 0;
-                kill(childrenList[childNumber - 1].pid,SIGKILL);
+                printf("Child %i PID = %i\n",childNumber,childrenList[childNumber].pid);
+                childIndex[childNumber] = 0;
+                childrenList[childNumber].active = 0;
+                kill(childrenList[childNumber].pid,SIGKILL);
             }
             else
             {
@@ -221,21 +243,38 @@ int main()
         if(strncmp("find",fileName,4) == 0)
         {
             int currentCounter;
-            currentCounter = *childrenCounter;
-            *childrenCounter = *childrenCounter + 1;
+            // currentCounter = *childrenCounter;
+            // *childrenCounter = *childrenCounter + 1;
+            int forkYes = 0;
             // *globalCount = *childrenCounter;
-
-
-            // printf("Parent PID = %d\n",getpid());
-            if (*childrenCounter < 11)
+            for (int i =0; i < 10; i++)
             {
+
+                if (childIndex[i] == 0)
+                {
+                    currentCounter = i;
+                    childIndex[i] = 1;
+                    forkYes = 1;
+                    i = 10;
+                }
+                    
+            }
+
+
+            if (forkYes == 1)
+            {
+            printf("About to fork and piping %i!\n",currentCounter);
+            // pipe(fd[currentCounter]);
+
+            printf("Outside fork fd[currentCounter][0] = %i \n",fd[*overwritePipe][0]);
+            printf("Outside fork fd[currentCounter][1] = %i \n",fd[*overwritePipe][1]); 
                 if (fork() == 0)
                 {
                     // printf("Childrencounter for child %i",)
                     char bufferOutput [2000];
                     // printf("Childrencounter = %d\n",currentCounter + 1);
 
-                    
+                    printf("forked just now \n");
                     char cwdf [1024];
                     char swdf [1024];
                     getcwd(cwdf,sizeof(cwdf));   
@@ -245,18 +284,15 @@ int main()
                     child.active = 1;
                     childrenList[currentCounter] = child;
                     // itoa(currentCounter,buffer,10);
-
-                    int firstDirectory = 1;
-                    int dirElement = 0;
                     char *inputBuffer;
-                    inputBuffer = memcpy(inputBuffer,fileName + 5, strlen(fileName + 5) - 4);
 
-
+                    // inputBuffer = memcpy(inputBuffer,fileName + 5, strlen(fileName + 5) - 4);
                     // sleep(5); //finding stuff
+
                     if (strstr(fileName,"-s"))
                     {
                         int found = 0;
-                        
+                        printf("finding with -s\n");
 
                         while (1)
                         {
@@ -320,23 +356,6 @@ int main()
                                     strcat(bufferOutput,"was not found \n");
                             }
 
-                            // dir = open(".");
-
-                            // //IF IT'S A DIRECTORY THEN NAVIGATE INTO IT!
-                            //     while ((dent = readdir(dir)) != NULL)
-                            //     {
-
-                            //         printf("Navigating through %s",dent->d_name);
-                            //         stat(dent->d_name, &sb);
-                            //         if (S_ISDIR(sb.st_mode))
-                            //         {
-                            //             printf(" is directory ---- ");
-                            //         }
-                            //         printf("\n");
-                            //     }
-                            // close(dir);
-                            
-
 
                             if (strcmp(swdf,cwdf) == 0)
                             {
@@ -351,13 +370,13 @@ int main()
 
                     else
                     {
-                        // printf("Finding!\n");
+                        printf("Finding!\n");
                         dir = opendir(".");
                         int found = 0;
 
                         while ((dent = readdir(dir)) != NULL)
                         {
-                            printf("dent->d_name == %s\n",dent->d_name);
+                            // printf("dent->d_name == %s\n",dent->d_name);
                             // printf("fileName+5 = %s\n",fileName+5);
                             // printf("length of fileName + 5 = %d\n",strlen(fileName+5) - 1);
                             // printf("length of dent->dname = %d\n",strlen(dent->d_name));
@@ -376,7 +395,7 @@ int main()
                             {
                                 printf("If \n");
                                 char childNumber[10];
-                                itoa(*childrenCounter,childNumber,10);
+                                itoa(currentCounter,childNumber,10);
                                 strcat(bufferOutput,"\nChild ");
                                 strcat(bufferOutput,childNumber);
                                 strcat(bufferOutput," reporting!!!! \n");
@@ -393,7 +412,7 @@ int main()
                         if (found == 0)
                         {
                                 char childNumber[10];
-                                itoa(*childrenCounter,childNumber,10);
+                                itoa(currentCounter,childNumber,10);
                                 strcat(bufferOutput,"\nChild ");
                                 strcat(bufferOutput,childNumber);
                                 strcat(bufferOutput," reporting!!!! \n");
@@ -411,14 +430,27 @@ int main()
                     //     printf("File does not exist!!! \n");
                     // }
                     int a = 0;
-                    // printf("Buffer Output = %s\n",bufferOutput);
+                    printf("Buffer Output = %s\n",bufferOutput);
                     // printf("fd %d\n",fd[currentCounter][1]);
+                    printf("Current counter = %i\n",currentCounter);
+                    printf("fd[currentCounter][0] = %i \n",fd[currentCounter][0]);
+                    printf("fd[currentCounter][1] = %i \n",fd[currentCounter][1]);
+                    sleep(5);
+
+
                     write(fd[currentCounter][1],bufferOutput,1024);
-                    
+                    close(fd[0][0]);
+                    close(fd[0][1]);
+                    // close(fd[currentCounter][0]);
+                    // close(fd[currentCounter][1]);
+
+                    *overwritePipe = currentCounter;
+
                     kill(parentPid,SIGUSR1);
+                    // close(fd[currentCounter][1]);
                     childrenList[currentCounter].active = 0; 
                     
-                    sleep(50);
+                    childIndex[currentCounter] = 0;
 
                     printf("\n");
                     return 9;
@@ -426,11 +458,7 @@ int main()
 
                 // printf("after child process %i\n",*childrenCounter);
             }
-            else
-            {
-                printf("Exceeding limit!!!! \n");
-            }
-            
+    
 
         }
     }

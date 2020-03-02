@@ -1,1 +1,2 @@
-                                stat(dent->d_name, &sb);
+
+                    sleep(5);
