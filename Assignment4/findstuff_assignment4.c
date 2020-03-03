@@ -289,7 +289,7 @@ int main()
                     // printf("Childrencounter for child %i",)
                     char bufferOutput [20000];
                     // printf("Childrencounter = %d\n",currentCounter + 1);
-                    chdir("..");
+                    // chdir("..");
                     // printf("forked just now \n");
                     char cwdf [1024];
                     char swdf [1024];
@@ -817,7 +817,7 @@ int main()
                     // printf("Current counter = %i\n",currentCounter);
                     // printf("fd[currentCounter][0] = %i \n",fd[currentCounter][0]);
                     // printf("fd[currentCounter][1] = %i \n",fd[currentCounter][1]);
-                    // sleep(times);
+                    sleep(times);
                     T = time(NULL);      
                     tm = *localtime(&T);
                     hr2 = tm.tm_hour;
@@ -885,6 +885,10 @@ int main()
                 }   
 
                 // printf("after child process %i\n",*childrenCounter);
+            }
+            else
+            {
+                printf("Exceeding limit you have too many kids already! kill some! or wait til one die\n");
             }
     
 
