@@ -11,7 +11,7 @@
 #define KBLU  "\x1B[34m"
 #define RESET "\x1B[0m"
 #include <stdlib.h>
-Rare rare yessir
+Rare rare asd
 int main()
 {
 

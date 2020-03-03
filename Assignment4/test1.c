@@ -25,14 +25,13 @@ void fct()
 int main()
 {
 
-        time_t T= time(NULL);      
-        struct tm tm = *localtime(&T);
-        printf("hr = %i, min = %i, sec = %i\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
-        sleep(5);    
-        T = time(NULL);
-        tm = *localtime(&T);
-        printf("hr = %i, min = %i, sec = %i\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
-    // int parentPid = getpid();
+        
+    char test1[1000];
+    strcat(test1,"this is a test line");
+    for (char *word = strtok (test1, " "); word; word = strtok (NULL, " "))
+
+    printf("word = %s\n",word);
+    // int parentPid = getpid();e
     // pipe(fd);
     // printf("fd[0] = %i \n fd[1] = %i\n",fd[0],fd[1]);
     // close(fd[0]);
