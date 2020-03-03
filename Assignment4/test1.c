@@ -12,7 +12,10 @@
 #define RESET "\x1B[0m"
 #include <stdlib.h>
 int fd[2];
+double randnum(min, max) {
+        return ((rand() % (int)(((max) + 1) - (min))) + (min));
 
+}
 
 void fct()
 {
@@ -22,40 +25,47 @@ void fct()
 int main()
 {
 
-    int parentPid = getpid();
-    pipe(fd);
-    printf("fd[0] = %i \n fd[1] = %i\n",fd[0],fd[1]);
-    close(fd[0]);
-    close(fd[1]);
-    pipe(fd);
-    printf("fd[0] = %i \n fd[1] = %i\n",fd[0],fd[1]);    signal(SIGUSR1,fct);
-    char fileName [1000];
-    int savestd = dup(STDIN_FILENO);
+        time_t T= time(NULL);      
+        struct tm tm = *localtime(&T);
+        printf("hr = %i, min = %i, sec = %i\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+        sleep(5);    
+        T = time(NULL);
+        tm = *localtime(&T);
+        printf("hr = %i, min = %i, sec = %i\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+    // int parentPid = getpid();
+    // pipe(fd);
+    // printf("fd[0] = %i \n fd[1] = %i\n",fd[0],fd[1]);
+    // close(fd[0]);
+    // close(fd[1]);
+    // pipe(fd);
+    // printf("fd[0] = %i \n fd[1] = %i\n",fd[0],fd[1]);    signal(SIGUSR1,fct);
+    // char fileName [1000];
+    // int savestd = dup(STDIN_FILENO);
 
-    while(1)
-        {
-        fflush(0);
-        read(STDIN_FILENO,fileName,1000);
-        printf("%s",fileName);
-        dup2(savestd,STDIN_FILENO);
-        if (strncmp(fileName,"..",2) == 0)
-        {  
-            printf("finding\n");
-            int f1 = fork();
-             if (f1 == 0)
-                {
-                write(fd[1],"Overwriting",12);
-                sleep(3);
-                kill(parentPid,SIGUSR1);
-                kill(getpid(),SIGKILL);
-                // if (fork() == 0)
-                // {
-                //     write(fd[1],"tranlam",8);
-                //     kill(parentPid,SIGUSR1);
-                // }
-            }
-        }
-    }
+    // while(1)
+    //     {
+    //     fflush(0);
+    //     read(STDIN_FILENO,fileName,1000);
+    //     printf("%s",fileName);
+    //     dup2(savestd,STDIN_FILENO);
+    //     if (strncmp(fileName,"..",2) == 0)
+    //     {  
+    //         printf("finding\n");
+    //         int f1 = fork();
+    //          if (f1 == 0)
+    //             {
+    //             write(fd[1],"Overwriting",12);
+    //             sleep(3);
+    //             kill(parentPid,SIGUSR1);
+    //             kill(getpid(),SIGKILL);
+    //             // if (fork() == 0)
+    //             // {
+    //             //     write(fd[1],"tranlam",8);
+    //             //     kill(parentPid,SIGUSR1);
+    //             // }
+    //         }
+    //     }
+    // }
    
      
 

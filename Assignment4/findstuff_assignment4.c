@@ -97,7 +97,7 @@ void itoa(int value, char* str, int base) {
 	
 }
 
-void reaDir(DIR *dir, char bufferOutput[2000],char fileName[1000]);
+void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[2000],char inputBuffer[1000], int currentCounter);
 
 int main()
 {
@@ -245,8 +245,17 @@ int main()
         if(strncmp("find",fileName,4) == 0)
         {
             int currentCounter;
-            // currentCounter = *childrenCounter;
-            // *childrenCounter = *childrenCounter + 1;
+            srand(time(NULL));
+            int lowerLimit = 5, upperLimit = 20;
+            int times =  lowerLimit + rand() % (upperLimit - lowerLimit);   
+            time_t T= time(NULL);      
+            struct tm tm = *localtime(&T);
+            int hr, min, sec, hr2, min2, sec2;
+            hr = tm.tm_hour;
+            min = tm.tm_min;
+            sec = tm.tm_sec;
+            // printf("hr = %i, min = %i, sec = %i\n", hr, min, sec);
+            
             int forkYes = 0;
             // *globalCount = *childrenCounter;
             for (int i =0; i < 10; i++)
@@ -261,6 +270,7 @@ int main()
                 }
                     
             }
+            printf("Time for child %i = %i\n",currentCounter,times);
 
 
             if (forkYes == 1)
@@ -286,29 +296,31 @@ int main()
                     child.active = 1;
                     childrenList[currentCounter] = child;
                     // itoa(currentCounter,buffer,10);
-                    char *inputBuffer;
+                    char inputBuffer[1000];
+                    strcpy(inputBuffer,fileName+5);
+                    strtok(inputBuffer," ");
+                    // printf("inputBuffer = %s\n",inputBuffer);
 
-                    // inputBuffer = memcpy(inputBuffer,fileName + 5, strlen(fileName + 5) - 4);
                     // sleep(5); //finding stuff
 
                     if (strstr(fileName,"-s"))
                     {
                         int found = 0;
-                        printf("finding with -s\n");
+                        // printf("finding with -s\n");
 
-                        while (1)
-                        {
+                        // while (1)
+                        // {
                             getcwd(cwdf,sizeof(cwdf));
-                            printf("Current Directory = %s\n",cwdf);
+                            // printf("Current Directory = %s\n",cwdf);
                             dir = opendir(".");
 
                             
                             while ((dent = readdir(dir)) != NULL)
                             {
-                                printf("dent->d_name == %s\n",dent->d_name);
+                                // printf("dent->d_name == %s\n",dent->d_name);
                                 // printf("fileName+5 = %s\n",fileName+5);
                                 int lenDent = strlen(dent->d_name);
-                                int lenInput = strlen(fileName +5) - 1;
+                                int lenInput = strlen(inputBuffer);
                                 int max = lenDent;
                                 if (lenDent > lenInput)
                                     max = lenDent;
@@ -319,12 +331,12 @@ int main()
                         
                                 if ((strncmp(dent->d_name, inputBuffer,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
                                 {
-
+                                    // printf("Found dent-> %s\n",dent->d_name);
                                     char childNumber[10];
-                                    itoa(*childrenCounter,childNumber,10);
+                                    itoa(currentCounter,childNumber,10);
                                     strcat(bufferOutput,"\nChild ");
                                     strcat(bufferOutput,childNumber);
-                                    strcat(bufferOutput," reporting!!!! \n");
+                                    strcat(bufferOutput," reporting: \n");
                                     strncat(bufferOutput,fileName+5,strlen(dent->d_name));
                                     strcat(bufferOutput," was found in directory ");
                                     strcat(bufferOutput,cwdf);
@@ -333,41 +345,38 @@ int main()
                                     found = 1;
                                 }
 
-                                // if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
-                                // {
-                                //     printf("Dent->d_name = %s\n",dent->d_name);
-                                //     reaDir(opendir(dent->d_name),bufferOutput,fileName);
-                                // }
+                                if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
+                                {
+                                    // printf("Dent->d_name = %s\n",dent->d_name);
+                                    reaDir(dir,dent->d_name, cwdf, bufferOutput,inputBuffer, currentCounter);
+                                }
                                 
                                 
                             }     
                             close(dir);
-                            chdir("..");
                             getcwd(swdf,sizeof(swdf));
                             // printf("Sub directory = %s\n",swdf);
 
                             if (found == 0)
                             {
                                     char childNumber[10];
-                                    itoa(*childrenCounter,childNumber,10);
+                                    itoa(currentCounter,childNumber,10);
                                     strcat(bufferOutput,"\nChild ");
                                     strcat(bufferOutput,childNumber);
-                                    strcat(bufferOutput," reporting!!!! \n");
+                                    strcat(bufferOutput," reporting: \n");
                                     strcat(bufferOutput,"The file ");
                                     strcat(bufferOutput,fileName+5);
                                     strcat(bufferOutput,"was not found \n");
                             }
 
 
-                            if (strcmp(swdf,cwdf) == 0)
-                            {
-                                sleep(2);
-                                printf("quitting finding -s\n");
-                                break;
-                            }
-                            sleep(1);
-                        }
+                        // printf("--------------------------------\n");
+                        // printf("Buffer Output = %s\n",bufferOutput);
                     }
+                        
+                    // }
+
+    
 
 
                     else
@@ -399,7 +408,7 @@ int main()
                                 itoa(currentCounter,childNumber,10);
                                 strcat(bufferOutput,"\nChild ");
                                 strcat(bufferOutput,childNumber);
-                                strcat(bufferOutput," reporting!!!! \n");
+                                strcat(bufferOutput," reporting: \n");
                                 strncat(bufferOutput,fileName+5,strlen(dent->d_name));
                                 strcat(bufferOutput," was found in directory ");
                                 strcat(bufferOutput,cwdf);
@@ -416,7 +425,7 @@ int main()
                                 itoa(currentCounter,childNumber,10);
                                 strcat(bufferOutput,"\nChild ");
                                 strcat(bufferOutput,childNumber);
-                                strcat(bufferOutput," reporting!!!! \n");
+                                strcat(bufferOutput," reporting: \n");
                                 strcat(bufferOutput,"The file ");
                                 strcat(bufferOutput,fileName+5);
                                 strcat(bufferOutput,"was not found \n");
@@ -436,7 +445,51 @@ int main()
                     // printf("Current counter = %i\n",currentCounter);
                     // printf("fd[currentCounter][0] = %i \n",fd[currentCounter][0]);
                     // printf("fd[currentCounter][1] = %i \n",fd[currentCounter][1]);
-                    sleep(15);
+                    sleep(times);
+                    T = time(NULL);      
+                    tm = *localtime(&T);
+                    hr2 = tm.tm_hour;
+                    min2 = tm.tm_min;
+                    sec2 = tm.tm_sec;
+                    // printf("line 454 hr2 = %i, min2 = %i, sec2 = %i\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+                    // printf("455?");
+                    char hrCharResult[10];
+                    char minCharResult[10];
+                    char secCharResult[10];
+                    int hrResult = hr2 - hr;
+                    int minResult = min2 - min;
+                    int secResult = sec2 - sec;
+                    if (hrResult < 0)
+                        hrResult = hr2 + 60 - hr;
+                    if (minResult < 0)
+                        minResult = min2 + 60 - min;
+                    if (secResult < 0)
+                        secResult = sec2 + 60 - sec;
+                    if (minResult > 0 && (sec2 < sec))
+                        minResult = minResult - 1;
+                    if (hrResult > 0 && (min2 < min))
+                        hrResult = hrResult - 1;
+                    
+
+                    // itoa(hrResult,hrCharResult,10);
+                    // itoa(minResult,minCharResult,10);
+                    // itoa(secResult,secCharResult,10);
+                    // printf("464");
+                    // char timeTotal [100];
+                    // strcat(timeTotal,"That took a total of ");
+                    // printf("464");
+                    // strcat(timeTotal,hrCharResult);
+                    // strcat(timeTotal,"::");
+                    // printf("464");
+                    // strcat(timeTotal,minCharResult);
+                    // strcat(timeTotal,"::");
+                    // strcat(timeTotal,secCharResult);
+                    // strcat(timeTotal,"\n");                   
+                    // strcat(bufferOutput,timeTotal);
+                    // printf("473 here! ");
+                    // printf("timeTotal = %s\n",timeTotal);
+
+                    // printf("Child %i bufferOutput = %s\n",currentCounter,bufferOutput);
 
 
                     write(fd[currentCounter][1],bufferOutput,1024);
@@ -448,6 +501,8 @@ int main()
                     *overwritePipe = currentCounter;
 
                     kill(parentPid,SIGUSR1);
+                    printf("\nTotal time it took for child%i= %i hour::%i min::%i sec\n",currentCounter,hrResult,minResult,secResult);
+
                     // close(fd[currentCounter][1]);
                     childrenList[currentCounter].active = 0; 
                     
@@ -467,59 +522,70 @@ int main()
 
 }
 
-void reaDir(DIR *dir, char bufferOutput[2000], char fileName[1000])
+void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[2000], char inputBuffer[1000], int currentCounter)
 {
-    printf("going inside reaDir \n");
+    // printf("going inside reaDir \n");
     struct stat sb;
     struct dirent *dent;
     char cwdf[1024];
-    char *inputBuffer;
-    inputBuffer = memcpy(inputBuffer,fileName + 5, strlen(fileName + 5) - 4);
 
-    // chdir()
     
-    
-
+    chdir(directTarget);
     getcwd(cwdf,sizeof(cwdf));
-    printf("Current Directory recursive = %s\n",cwdf);
+
+    // printf("directTarget = %s\n",directTarget);
+    // getcwd(cwdf,sizeof(cwdf));
+    // printf("Current Directory recursive = %s\n",cwdf);
+    // chdir(homeDirect);
     
 
-        
-    while ((dent = readdir(dir)) != NULL)
-    {
-        printf("dent->d_name recursive == %s\n",dent->d_name);
-        // printf("fileName+5 = %s\n",fileName+5);
-        int lenDent = strlen(dent->d_name);
-        int lenInput = strlen(fileName +5) - 1;
-        int max = lenDent;
-        if (lenDent > lenInput)
-            max = lenDent;
-        if (lenDent < lenInput)
-            max = lenInput;
+        int found = 0;
+
     
-        stat(dent->d_name, &sb);
+        dir = opendir(".");
 
-        if ((strncmp(dent->d_name, inputBuffer,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
-        {
-
-            char childNumber[10];
-            itoa(*childrenCounter,childNumber,10);
-            strcat(bufferOutput,"\nChild ");
-            strcat(bufferOutput,childNumber);
-            strcat(bufferOutput," reporting!!!! \n");
-            strncat(bufferOutput,fileName+5,strlen(dent->d_name));
-            strcat(bufferOutput," was found in directory ");
-            strcat(bufferOutput,cwdf);
-            strcat(bufferOutput,"\n");
-            // printf("%s was found in directory %s\n",fileName, cwdf);
-        }
-
-        if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
-        {
-            reaDir(opendir(dent->d_name),bufferOutput,fileName);
-        }
         
+        while ((dent = readdir(dir)) != NULL)
+        {
+            // printf("dent->d_name == %s\n",dent->d_name);
+            // printf("fileName+5 = %s\n",fileName+5);
+            int lenDent = strlen(dent->d_name);
+            int lenInput = strlen(inputBuffer);
+            int max = lenDent;
+            if (lenDent > lenInput)
+                max = lenDent;
+            if (lenDent < lenInput)
+                max = lenInput;
         
-    }     
-    close(dir);
+            stat(dent->d_name, &sb);
+    
+            if ((strncmp(dent->d_name, inputBuffer,max) == 0 ) && !(S_ISDIR(sb.st_mode)) )
+            {
+                // printf("Inside readir: found dent-> %s\n",dent->d_name);
+                char childNumber[10];
+                itoa(currentCounter,childNumber,10);
+                strcat(bufferOutput,"\nChild ");
+                strcat(bufferOutput,childNumber);
+                strcat(bufferOutput," reporting: \n");
+                strncat(bufferOutput,inputBuffer,strlen(dent->d_name));
+                strcat(bufferOutput," was found in directory ");
+                strcat(bufferOutput,cwdf);
+                strcat(bufferOutput,"\n");
+                // printf("Inside readir: %s was found in directory %s\n",dent->d_name, cwdf);
+                found = 1;
+            }
+
+            if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
+            {
+                // printf("Dent->d_name = %s\n",dent->d_name);
+                reaDir(dir,dent->d_name, cwdf, bufferOutput,inputBuffer, currentCounter);
+            }
+            
+            
+        }     
+        chdir(homeDirect);
+        close(dir);
+    
+
 }
+
