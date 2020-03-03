@@ -289,7 +289,7 @@ int main()
                     // printf("Childrencounter for child %i",)
                     char bufferOutput [20000];
                     // printf("Childrencounter = %d\n",currentCounter + 1);
-                    // chdir("..");
+                    chdir("..");
                     // printf("forked just now \n");
                     char cwdf [1024];
                     char swdf [1024];
@@ -496,11 +496,11 @@ int main()
 
                             
                             close(dir);
-                            if (foundAtAll == 0)
+                            if (strlen(bufferOutput) == 0)
                             {
                                     char childNumber[10];
                                     itoa(currentCounter,childNumber,10);
-                                    strcat(bufferOutput,"\nChild 503");
+                                    strcat(bufferOutput,"\nChild");
                                     strcat(bufferOutput,childNumber);
                                     strcat(bufferOutput," reporting: \n");
                                     strcat(bufferOutput,"The text '");
@@ -598,7 +598,7 @@ int main()
                                     memset(typeOfFile,0,100);
                                     // printf("strlen(thirdbuffer+3) = %i",strlen(thirdBuffer+3));
                                     strncpy(typeOfFile,thirdBuffer+3,strlen(thirdBuffer+3)-1);
-                                    printf("type of file = %s with size %i",typeOfFile,strlen(typeOfFile));
+                                    // printf("type of file = %s with size %i",typeOfFile,strlen(typeOfFile));
 
 
                                     if (S_ISREG(sb.st_mode) && (strcmp(dent->d_name,".DS_Store") != 0) && strstr(dent->d_name,typeOfFile))
@@ -651,7 +651,7 @@ int main()
 
                             
                             close(dir);//
-                            if (foundAtAll == 0)
+                            if (strlen(bufferOutput) == 0)
                             {
                                     char childNumber[10];
                                     itoa(currentCounter,childNumber,10);
@@ -728,7 +728,7 @@ int main()
                                 getcwd(swdf,sizeof(swdf));
                                 // printf("Sub directory = %s\n",swdf);
 
-                                if (found == 0)
+                                if (strlen(bufferOutput) == 0)
                                 {
                                         char childNumber[10];
                                         itoa(currentCounter,childNumber,10);
@@ -790,7 +790,7 @@ int main()
                                 // printf("found = %i\n",found);
                                 
                             }
-                            if (found == 0)
+                            if (strlen(bufferOutput) == 0)
                             {
                                     char childNumber[10];
                                     itoa(currentCounter,childNumber,10);
@@ -802,7 +802,7 @@ int main()
                                     strcat(bufferOutput,"was not found \n");
 
                             }
-                            close(dir);
+                            close(dir); //
                         }
                 }
                     
