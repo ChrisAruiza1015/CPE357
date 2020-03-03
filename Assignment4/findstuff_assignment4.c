@@ -100,7 +100,7 @@ int get_argument(char* line, int argn, char* result);
 
 void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[20000],char inputBuffer[1000], int currentCounter);
 void dirText(DIR *dir, char *directTarget, char*homeDirect, char bufferOutput[20000], char bufferNoQuotation[1000], int currentCounter);
-void dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferOutput[20000], char bufferNoQuotation[1000], int currentCounter, char *specific);
+int dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferOutput[20000], char bufferNoQuotation[1000], int currentCounter, char *specific);
 
 int main()
 {
@@ -440,8 +440,6 @@ int main()
                                     strncpy(typeOfFile,thirdBuffer+3,strlen(thirdBuffer+3));
                                     strcpy(fileEnding,dent->d_name + strlen(dent->d_name) - strlen(typeOfFile));
 
-                                    printf("439 type of file = %s with size %i",typeOfFile,strlen(typeOfFile));
-                                    printf("File %s wit fileEnding = %s with size %i\n",dent->d_name,fileEnding,strlen(fileEnding));
 
 
                                     if (S_ISREG(sb.st_mode) && (strcmp(dent->d_name,".DS_Store") != 0) && (strstr(typeOfFile,fileEnding)))
@@ -465,7 +463,6 @@ int main()
                                                     // printf("dent->d_name = %s\n",dent->d_name);
                                                     found = 1;
                                                     foundAtAll = 1;
-                                                    printf("468: foundAtAll = %i",foundAtAll);
                                                     break;
                                                 }
                                             }
@@ -490,8 +487,8 @@ int main()
 
                                     if ((strcmp(dent->d_name, ".") != 0) && (strcmp(dent->d_name, "..") != 0) && S_ISDIR(sb.st_mode))
                                     {
-                                        dirTextSpecific(dir,dent->d_name,cwdf,bufferOutput,bufferNoQuotation,currentCounter,thirdBuffer+3);
-
+                                        foundAtAll = dirTextSpecific(dir,dent->d_name,cwdf,bufferOutput,bufferNoQuotation,currentCounter,thirdBuffer+3);
+                                        printf("foundAtAll = %i in directory %s\n",foundAtAll,dent->d_name);
                                     }
 
                                 }
@@ -503,7 +500,7 @@ int main()
                             {
                                     char childNumber[10];
                                     itoa(currentCounter,childNumber,10);
-                                    strcat(bufferOutput,"\nChild 505");
+                                    strcat(bufferOutput,"\nChild ");
                                     strcat(bufferOutput,childNumber);
                                     strcat(bufferOutput," reporting: \n");
                                     strcat(bufferOutput,"The text '");
@@ -964,7 +961,7 @@ void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[20
 
 }
 
-void dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferOutput[20000], char bufferNoQuotation[1000], int currentCounter, char *specific)
+int dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferOutput[20000], char bufferNoQuotation[1000], int currentCounter, char *specific)
 {
     struct stat sb;
     struct dirent *dent;
@@ -973,7 +970,7 @@ void dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferO
     char line[1024];
     chdir(directTarget);
     getcwd(cwdf,sizeof(cwdf));
-
+    int foundAtAll;
     int found;
     dir = opendir(".");
 
@@ -1005,6 +1002,7 @@ void dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferO
                     {
                         // printf("dent->d_name = %s\n",dent->d_name);
                         found = 1;
+                        foundAtAll = 1;
                         break;
                     }
                 }
@@ -1035,7 +1033,7 @@ void dirTextSpecific(DIR *dir, char *directTarget, char*homeDirect, char bufferO
     }
     chdir(homeDirect);
     close(dir);
-
+    return foundAtAll;
     
 }
 
