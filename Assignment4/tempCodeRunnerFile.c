@@ -1,1 +1,2 @@
-t
+
+                    getcwd(cwdf,sizeof(cwdf));   

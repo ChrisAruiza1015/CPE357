@@ -40,8 +40,8 @@ void fct()
 
     printf("\nChildren %i overwriting input with task %s\n",*overwritePipe, childrenList[*overwritePipe].task);
     dup2(fd[*overwritePipe][0],STDIN_FILENO);
-    close(fd[*overwritePipe][0]);
-    close(fd[*overwritePipe][1]);
+    // close(fd[*overwritePipe][0]);
+    // close(fd[*overwritePipe][1]);
 
 
 }
@@ -274,13 +274,13 @@ int main()
                 }
                     
             }
-            printf("Time for child %i = %i\n",currentCounter,times);
+            // printf("Time for child %i = %i\n",currentCounter,times);
 
 
             if (forkYes == 1)
             {
             // printf("About to fork and piping %i!\n",currentCounter);
-            pipe(fd[currentCounter]);
+            // pipe(fd[currentCounter]);
 
             // printf("Outside fork fd[currentCounter][0] = %i \n",fd[*overwritePipe][0]);
             // printf("Outside fork fd[currentCounter][1] = %i \n",fd[*overwritePipe][1]); 
@@ -290,6 +290,9 @@ int main()
                     char bufferOutput [20000];
                     // printf("Childrencounter = %d\n",currentCounter + 1);
                     // chdir("..");
+                    // chdir("..");
+                    // chdir("..");
+                    // chdir("somefile");
                     // printf("forked just now \n");
                     char cwdf [1024];
                     char swdf [1024];
@@ -688,6 +691,7 @@ int main()
                                 
                                 while ((dent = readdir(dir)) != NULL)
                                 {
+                                    // printf("693 current directory = %s\n",cwdf);
                                     // printf("dent->d_name == %s\n",dent->d_name);
                                     // printf("fileName+5 = %s\n",fileName+5);
                                     int lenDent = strlen(dent->d_name);
@@ -817,7 +821,7 @@ int main()
                     // printf("Current counter = %i\n",currentCounter);
                     // printf("fd[currentCounter][0] = %i \n",fd[currentCounter][0]);
                     // printf("fd[currentCounter][1] = %i \n",fd[currentCounter][1]);
-                    sleep(times);
+                    // sleep(times);
                     T = time(NULL);      
                     tm = *localtime(&T);
                     hr2 = tm.tm_hour;
@@ -867,14 +871,13 @@ int main()
                     write(fd[currentCounter][1],bufferOutput,20000);
                     // close(fd[0][0]);
                     // close(fd[0][1]);
-                    close(fd[currentCounter][0]);
-                    close(fd[currentCounter][1]);
+                    // close(fd[currentCounter][0]);
+                    // close(fd[currentCounter][1]);
 
                     *overwritePipe = currentCounter;
-
-                    kill(parentPid,SIGUSR1);
                     printf("\nTotal time it took for child%i= %i hour::%i min::%i sec\n",currentCounter,hrResult,minResult,secResult);
 
+                    kill(parentPid,SIGUSR1);
                     // close(fd[currentCounter][1]);
                     childrenList[currentCounter].active = 0; 
                     
@@ -914,7 +917,6 @@ void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[20
     // printf("Current Directory recursive = %s\n",cwdf);
     // chdir(homeDirect);
     
-
         int found = 0;
 
     
@@ -923,6 +925,8 @@ void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[20
         
         while ((dent = readdir(dir)) != NULL)
         {
+            // printf("929 current directory = %s\n",cwdf);
+
             // printf("dent->d_name == %s\n",dent->d_name);
             // printf("fileName+5 = %s\n",fileName+5);
             int lenDent = strlen(dent->d_name);
@@ -959,8 +963,10 @@ void reaDir(DIR *dir, char *directTarget, char *homeDirect, char bufferOutput[20
             
             
         }     
+        
         chdir(homeDirect);
         close(dir);
+        
     
 
 }
