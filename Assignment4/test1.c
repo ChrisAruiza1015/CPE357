@@ -26,11 +26,12 @@ int main()
 {
 
         
-    char test1[1000];
-    strcat(test1,"this is a test line");
-    for (char *word = strtok (test1, " "); word; word = strtok (NULL, " "))
-
-    printf("word = %s\n",word);
+   clock_t start = clock();
+   //... do work here
+   clock_t end = clock();
+   double time_elapsed_in_seconds = (end - start)/(double)CLOCKS_PER_SEC;
+    printf("time = %li",time_elapsed_in_seconds);
+    // printf("word = %s\n",word);
     // int parentPid = getpid();e
     // pipe(fd);
     // printf("fd[0] = %i \n fd[1] = %i\n",fd[0],fd[1]);
